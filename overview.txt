@@ -1,0 +1,19 @@
+embedding-vector-system/
+├── pom.xml
+├── protos/
+│   └── embedding.proto
+├── text-embedding-service/
+│   ├── src/main/java/com/example/text-embedding/
+│   │   ├── EmbeddingServer.java
+│   │   ├── EmbeddingServiceImpl.java
+│   └── pom.xml
+├── vector-db-service/
+│   ├── src/main/java/com/example/vectordb/
+│   │   ├── VectorDBServer.java
+│   │   ├── VectorDBServiceImpl.java
+│   └── pom.xml
+└── client/
+    ├── src/main/java/com/example/client/
+    │   └── ClientApp.java
+    └── pom.xml
+
