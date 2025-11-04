@@ -1,0 +1,1 @@
+📄 Daten → 🧠 Embedding-Modell → 📊 Vektor → 🗄️ Vektor-DB → 🔍 AI-Anwendung

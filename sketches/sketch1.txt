@@ -1,0 +1,42 @@
+
+
+################## Einmalige Datenaufbereitung ##################
+📄 Data → [Preprocessing-Service] → [Embedding-Service] → [Vector-DB-Service]
+
+################## Live Query-Verarbeitung ##################  
+👤 Query → [Query-Service] → [Embedding-Service] → [Vector-DB-Service] → [Ranking-Service] → [LLM-Service] → 👤
+
+Service	Zweck	Skalierung	Technologie
+🧠 Embedding-Service	    Text → Vektoren	    GPU-intensiv	    Python + Transformers
+🗄️ Vector-DB-Service	     Speicher + Suche	 Memory-intensiv	 Pinecone/Weaviate/Qdrant
+🔍 Query-Service	        Request-Routing	    Stateless	        Go/Node.js
+🎯 Ranking-Service	        Re-Ranking	        CPU-intensiv	    Python + ML
+🤖 LLM-Service	            Text-Generation	    PU-intensiv	        Python + vLLM
+🔧 Preprocessing-Service	Data-Cleaning	    CPU-intensiv	    Python/Go
+
+
+********** PREPROCESSING **********
+- Data Cleaning	> Qualität verbessern:	HTML-Tags entfernen, Duplikate
+- Chunking | Große Docs aufteilen: 512-Token Blöcke bei langen PDFs
+- OCR/Extraktion | Text aus Bildern: Scanned PDFs → Text
+- Format-Konvertierung |	Einheitliches Format:	DOCX/PDF → Plain Text
+
+********** POSTPROCESSING **********
+- Normalisierung: Für bessere Ähnlichkeitsberechnung
+- Dimensionsreduktion: Speicher + Geschwindigkeit
+- Quantisierung: Komprimierung für große Datenmengen
+
+********** RETRIEVAL **********
+ Zwei-Stufen-Approach:
+1. Schnelle Vorauswahl (Vector-DB): Top 100 Kandidaten
+2. Präzise Nachbewertung (Re-Ranker): Top 10 finale Ergebnisse
+
+********** PERFORMANCE MEASUREMENTS **********
+- Caching: Häufige Anfragen zwischenspeichern
+- Load Balancing: Verteilung bei vielen Anfragen
+- A/B Testing: Verschiedene Modelle vergleichen
+
+********** MODERNE ERWEITERUNGEN **********
+- Hybrid Search: Keywords-Suche + Semantic-Search → Kombinierte Ergebnisse
+- Multi-Modal Integration: Cross-Modal Search <-> Text-Query findet Bilder
+- RAG-Optimierungen: Query-Expansion <-> Anfrage erweitern für bessere Treffer; Citation-Tracking <-> Quellen-Referenzen mitführen
