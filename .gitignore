@@ -20,3 +20,9 @@ venv/
 
 # Jupyter
 .ipynb_checkpoints/
+
+#maven
+target/
+
+# hide keys 
+secrets.json
