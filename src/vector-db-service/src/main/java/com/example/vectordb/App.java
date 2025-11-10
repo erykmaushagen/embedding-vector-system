@@ -4,40 +4,50 @@ import io.pinecone.configs.PineconeConfig;
 
 import org.openapitools.db_control.client.model.*;
 
-class TestServiceConnection {
-    private String apiKey;
-
-    public TestServiceConnection(String API_KEY) {
-        this.apiKey = API_KEY;
-    }
-
-    public Pinecone setConnection(String[] args) {
-        Pinecone clientInstance = new Pinecone.Builder(this.apiKey).build();
-        return clientInstance;
-    }
-
-    public Object getApiKey() {
-        return this.apiKey;
-    }
-}
-
 public class App {
 
     public static void main(String[] args) {
-        String meinKey = "xy";
+        System.out.println("--- Starte die Konfiguration des Vector Database Clients... ---");
 
-        Pinecone testInstance = new Pinecone.Builder(meinKey).build();
+        VectorDataBaseConfig dbConfig = null;
+        try {
+            // 1. Instanziierung des Konfigurationsobjekts.
+            // Es wird angenommen, dass der API-Schlüssel aus 'secrets.json' geladen wird.
+            // Der DUMMY_KEY dient nur als Platzhalter für den Konstruktor.
+            dbConfig = new VectorDataBaseConfig();
+            System.out.println("INFO: VectorDataBaseConfig-Instanz erstellt.");
 
-        // PineconeConfig config = testInstance.getConfig();
+            // 2. Verbindung testen
+            System.out.println("INFO: Führe Verbindungstest durch...");
+            boolean isConnected = dbConfig.testConnection();
 
-        // System.out.println("API-KEY:" + config.getApiKey());
-        // System.out.println("HOST:" + config.getHost());
-        // System.out.println("HOST:" + config.getHost());
-        // if (config.isTLSEnabled()) {
-        // System.out.println("TLS is enabled");
-        // } else {
-        // System.out.println("TLS is not enabled");
-        // }
+            if (isConnected) {
+                System.out.println("ERFOLG: Datenbankverbindung erfolgreich hergestellt. Client ist bereit.");
 
+                // 3. Client abrufen und nutzen
+                Pinecone client = dbConfig.getClient();
+                System.out.println("ERFOLG: Pinecone Client erfolgreich abgerufen: " + client.getClass().getName());
+
+                // Hier würden die eigentlichen Datenbankoperationen stattfinden.
+                // client.listIndexes();
+
+            } else {
+                System.err.println(
+                        "FEHLER: Datenbankverbindung konnte NICHT hergestellt werden. Bitte 'secrets.json' und Netzwerkeinstellungen prüfen.");
+            }
+
+        } catch (IllegalStateException e) {
+            System.err.println("KRITISCHER FEHLER (API-Key): " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("UNERWARTETER FEHLER: " + e.getMessage());
+            // e.printStackTrace(); // Nur zur detaillierteren Fehlersuche
+        } finally {
+            // 4. Shutdown des Clients
+            if (dbConfig != null) {
+                dbConfig.shutdown();
+            }
+            System.out.println("INFO: Anwendung beendet.");
+            System.out.println("-------------------------------------------------------------");
+        }
     }
 }
