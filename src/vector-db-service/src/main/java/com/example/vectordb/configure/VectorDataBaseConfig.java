@@ -3,8 +3,6 @@ package com.example.vectordb.configure;
 import io.pinecone.clients.Pinecone;
 import io.pinecone.configs.PineconeConfig;
 import okhttp3.OkHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -22,20 +20,18 @@ import java.util.concurrent.TimeUnit;
  * Thread-safe Singleton-Pattern mit lazy initialization.
  */
 public class VectorDataBaseConfig {
-    private static final Logger log = LoggerFactory.getLogger(VectorDataBaseConfig.class);
 
     private String apiKey;
-    private final PineconeConfig config;
-    private volatile Pinecone client;
+    private PineconeConfig config;
+    private Pinecone client;
     private ObjectMapper mapper;
     private final Object lock = new Object();
 
     /**
-     * Konstruktor mit API-Key
-     * 
-     * @param apiKey Pinecone API-Key (erforderlich)
+     * Konstruktor lädt API-Key aus JSON
      */
     public VectorDataBaseConfig() {
+        ensureKeyloaded(); //
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new IllegalArgumentException("API-Key darf nicht null oder leer sein");
         }
@@ -44,10 +40,11 @@ public class VectorDataBaseConfig {
 
     /**
      * Konstruktor mit vollständiger Konfiguration
+     * 
+     * @param apiKey Pinecone API-Key (erforderlich)
      */
     public VectorDataBaseConfig(String apiKey, PineconeConfig customConfig) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
-            ensureKeyloaded();
             throw new IllegalArgumentException("API-Key darf nicht null oder leer sein");
         }
         this.apiKey = apiKey;
@@ -58,7 +55,7 @@ public class VectorDataBaseConfig {
      * Erstellt Standard-Konfiguration basierend auf Pinecone SDK Best Practices
      */
     private PineconeConfig buildConfig() {
-        ensureKeyloaded();
+
         PineconeConfig cfg = new PineconeConfig(apiKey);
 
         // Source Tag für Tracking/Analytics
@@ -81,35 +78,49 @@ public class VectorDataBaseConfig {
     }
     // apiKey, sourceTag, proxyConfig, customOkHttpClient
 
+    /**
+     * Überprüft korrektes Laden der .json mit dem API-Key
+     */
     private void ensureKeyloaded() {
         if (mapper == null) {
             mapper = new ObjectMapper();
         }
-        if (apiKey == null) {
-            Path path = Path.of("secrets.json");
-            if (Files.exists(path)) {
-                try {
-
-                    String json = Files.readString(path, StandardCharsets.UTF_8);
-                    JsonNode root = mapper.readTree(json);
-                    String key = root.path("key").asText(null);
-                    if (key != null && !key.isBlank()) {
-                        apiKey = key;
-                        return;
-                    }
-                } catch (IOException e) {
-                    throw new IllegalStateException(
-                            "Error reading or parsing 'secrets.json'. Please check file validity and permissions.", e);
-                }
-            }
+        // Frühzeitiger Exit, wenn bereits gesetzt
+        if (apiKey != null && !apiKey.trim().isEmpty()) {
+            return;
         }
-        throw new IllegalStateException(
-                "Pinecone-API-Key not found (or secrets.json not given or missing 'key' field)");
+
+        Path path = Path.of("secrets.json");
+
+        try (java.io.InputStream is = getClass().getClassLoader().getResourceAsStream("secrets.json")) {
+
+            if (is == null) {
+                // Die Datei wurde nicht auf dem Classpath gefunden.
+                throw new IllegalStateException(
+                        "'secrets.json' not found on the classpath. Please ensure it's in src/main/resources.");
+            }
+
+            System.out.println("Lade API-Key als Classpath-Ressource.");
+
+            String json = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+
+            JsonNode root = mapper.readTree(json);
+            String key = root.path("key").asText(null);
+
+            if (key != null && !key.isBlank()) {
+                apiKey = key;
+                return;
+            }
+        } catch (IOException e) {
+            // Hier fangen Sie die Ausnahme ab
+            System.err.println("Fehler beim Lesen oder Parsen von secrets.json: " + e.getMessage());
+        }
+        System.out.println(apiKey);
+
     }
 
     /**
-     * Gibt Pinecone Client Instanz zurück (Singleton mit lazy initialization)
-     * Thread-safe implementation mit Double-Checked Locking
+     * erhalte Pinecone Client aus der Konfiguration
      */
     public Pinecone getClient() {
         if (client == null) {
@@ -140,10 +151,10 @@ public class VectorDataBaseConfig {
 
                         client = builder.build();
 
-                        log.info("Pinecone Client erfolgreich initialisiert");
+                        System.out.println("Pinecone Client erfolgreich initialisiert");
                     } catch (Exception e) {
-                        log.error("Fehler bei der Initialisierung des Pinecone Clients", e);
-                        throw new RuntimeException("Pinecone Client konnte nicht erstellt werden", e);
+                        System.out.println("Fehler bei der Initialisierung des Pinecone Clients" + e.getMessage());
+                        throw new RuntimeException("Pinecone Client konnte nicht erstellt werden" + e.getMessage());
                     }
                 }
             }
@@ -154,17 +165,15 @@ public class VectorDataBaseConfig {
     /**
      * Testet ob die Verbindung zum Pinecone Service funktioniert
      */
-    public boolean testConnection() {
+    public boolean testConnection(Pinecone clientToTest) {
         try {
-            Pinecone testClient = getClient();
-            // Versuche Indexes aufzulisten als Connection-Test
-            testClient.listIndexes();
-            log.info("Verbindungstest erfolgreich");
+            clientToTest.listIndexes();
             return true;
         } catch (Exception e) {
-            log.error("Verbindungstest fehlgeschlagen", e);
+            System.out.println("Verbindungstest fehlgeschlagen: " + e.getMessage());
             return false;
         }
+
     }
 
     /**
@@ -177,16 +186,16 @@ public class VectorDataBaseConfig {
     /**
      * Schließt den Client und gibt Ressourcen frei
      */
-    public void shutdown() {
-        if (client != null) {
+    public void shutdown(Pinecone clientToTest) {
+        if (clientToTest != null) {
             synchronized (lock) {
-                if (client != null) {
+                if (clientToTest != null) {
                     try {
                         // Cleanup falls notwendig
-                        client = null;
-                        log.info("Pinecone Client heruntergefahren");
+                        clientToTest = null;
+                        System.out.println("Pinecone Client heruntergefahren");
                     } catch (Exception e) {
-                        log.error("Fehler beim Herunterfahren", e);
+                        System.out.println("Fehler beim Herunterfahren" + e.getMessage());
                     }
                 }
             }
