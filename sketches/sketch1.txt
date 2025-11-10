@@ -40,3 +40,7 @@ Service	Zweck	Skalierung	Technologie
 - Hybrid Search: Keywords-Suche + Semantic-Search → Kombinierte Ergebnisse
 - Multi-Modal Integration: Cross-Modal Search <-> Text-Query findet Bilder
 - RAG-Optimierungen: Query-Expansion <-> Anfrage erweitern für bessere Treffer; Citation-Tracking <-> Quellen-Referenzen mitführen
+
+
+
+********** IMPORTANT **********

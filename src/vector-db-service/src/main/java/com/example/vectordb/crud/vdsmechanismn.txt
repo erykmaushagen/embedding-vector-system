@@ -1,0 +1,109 @@
+
+
+************** HOW VECTOR DB's WORK **************
+
+1.  First, we use the embedding model to create vector embeddings for the content we want to index.
+
+2.  The vector embedding is inserted into the vector database, with some reference to the original content the embedding was created from.
+
+3.  When the application issues a query, we use the same embedding model to create embeddings for the query and use those embeddings to query the database
+    for similar vector embeddings. As mentioned before, those similar embeddings are associated with the original content that was used to create them.
+
+
+************** USING NEW INDIZES **************
+
+1. Different-Embedding Models
+
+2. Different Datatypes
+
+3. Different access rights or clients
+
+4. Different scaling/performance requirements
+
+BEISPIEL: 
+
+Index-Name              |       Datentyp & Modell       |               Zweck                             |           Begründung
+_____________________________________________________________________________________________________________________________________________________________________________
+products-text-v1        |   Produktbeschreibungen       | Suche nach Produkten über                       | Nur Text-Vektoren, optimiert 
+                        |    (Modell A)                 | Textanfragen (z.B. RAG für Produkt-QA).         | für semantische Textsuche.
+
+
+products-image-v2       |   Produktbilder (Modell B)    | Visuelle Ähnlichkeitssuche (Search by Image).   | Muss separat gespeichert werden, da Modell A und B unterschiedlich sind.
+
+
+support-docs-v3         |   Interne Support-Artikel     | Internes Chatbot-System für Mitarbeiter.        | Enthält vertrauliche interne Daten, muss separat von
+                        |   & FAQs (Modell A)           |                                                 | Kundendaten gehalten werden (Sicherheit/Zugriff).
+
+
+************** HOW DO V-DB's WORK? **************
+
+- In vector databases, we apply a similarity metric to find a vector that is the most similar to our query.
+
+- A vector database uses a combination of different algorithms that all participate in Approximate Nearest Neighbor (ANN) search
+- these algorithms optimize the search through hashing, quantization, or graph-based search
+
+
+************** PIPELINE FOR A VECTOR DB **************
+
+1. Vector   ->    2. Indexing    ->     3. Vector Database   ->   4. Querying    ->    5. Post Processing
+
+INDEXING : The vector database indexes vectors using an algorithm such as PQ, LSH, or HNSW (more on these below). 
+           This step maps the vectors to a data structure that will enable faster searching.
+
+QUERYING : The vector database compares the indexed query vector to the indexed vectors in the dataset to find 
+           the nearest neighbors (applying a similarity metric used by that index)
+
+POST PROCESSING: In some cases, the vector database retrieves the final nearest neighbors 
+           from the dataset and post-processes them to return the final results. This step can include re-ranking 
+           the nearest neighbors using a different similarity measure.
+
+
+************** ALGORITHM's HANDLING VECTOR EMBEDDINGS **************
++
+
+
+
+
+************** DATABASE OPERATIONS **************
+PERFOMANCE AND FAULT TOLERANCE: 
+
+- Sharding (Partitioning): Distributes data across multiple nodes to enhance performance (via parallel processing) and manage large datasets.
+                           Queries often use a "scatter-gather" pattern, being sent to all relevant partitions, which then return results to be combined.
+
+- Replication: Creates multiple copies of the data on different nodes for fault tolerance and high availability. 
+               It involves consistency trade-offs: Eventual consistency offers better availability/lower latency but 
+               risks temporary data inconsistencies, while strong consistency ensures immediate data uniformity but may increase latency.
+
+
+MONITORING: 
+
+- Resource Usage:        Track CPU, memory, disk space, and network activity to identify bottlenecks or constraints that could impact database performance.
+
+- Query Performance:     Monitor latency, throughput, and error rates to detect and address systemic issues affecting query efficiency and reliability.
+
+- System Health:         Observe the overall status of individual nodes, the replication process, and other critical components to ensure smooth and stable operation.
+
+
+ACCESS CONTROL: 
+
+- Data Protection 🔒:           Safeguards sensitive and confidential data from unauthorized access, modification, and potential breaches in AI applications.
+
+- Compliance:                   Helps organizations meet strict data privacy regulations (e.g., in healthcare/finance) to avoid legal and financial penalties.
+
+- Accountability & Auditing:    Maintains a record of user activities, crucial for auditing and tracing unauthorized access or modifications during security incidents.
+
+- Scalability & Flexibility:    Allows for seamless modification and expansion of user permissions as the organization and its data needs evolve.
+
+
+BACKUPS: 
+
+- Backups:                          Enable data safety and recoverability by regularly creating copies, often stored externally (e.g., cloud storage),
+                                    to restore the database to a previous state following data loss or corruption
+
+- Collections (e.g., Pinecone):     A feature allowing users to back up specific indexes and save them as collections, 
+                                    which can then be used to efficiently populate new indexes.
+
+
+
+************** SOURCES **************
+https://www.pinecone.io/learn/vector-database/

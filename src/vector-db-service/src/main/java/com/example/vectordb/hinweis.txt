@@ -1,0 +1,14 @@
+
+
+grpc → service → client → Pinecone SDK
+       ↑
+       │
+   model + exception
+
+- grpc kennt nur das service-Interface.
+
+- service verwendet client, aber nicht umgekehrt.
+
+- client ist die einzige Schicht, die Pinecone-spezifisches SDK importiert.
+
+- model & exception sind generisch und werden überall verwendet.

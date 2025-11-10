@@ -1,11 +1,11 @@
-import com.example.vectordb.configure.VectorDataBaseConfig;
+import com.example.vectordb.client.PineconeClientFactory;
 
 import io.pinecone.clients.Pinecone;
 import io.pinecone.configs.PineconeConfig;
 
 import org.openapitools.db_control.client.model.*;
 
-public class App {
+public class VectorDbApplication {
 
     public static void main(String[] args) {
         System.out.println("***************** TESTING *****************");

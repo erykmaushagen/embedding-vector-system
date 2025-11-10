@@ -1,0 +1,16 @@
+
+
+1. Create 
+- erstellen eines neuen Datensatzes
+- Upsert: Einfügen neuer Vektoren und Metadaten
+
+2. Read/Retrieve 
+- Query: Ähnlichkeitssuche mit Vektoren & Fetch (Abrufen nach ID)
+
+3. Update: 
+- aktulaisieren eines bestehenden Datensatzes
+- Upsert; (Überschreiben eines Vektors mit gleicher ID) oder Update(nur Metadaten ändern)
+
+4. Delete/Destroy: 
+- Löschen eines Datensatzes
+- Delete (Entfernen eines Vektors und seiner Metdaten)

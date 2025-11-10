@@ -1,0 +1,1 @@
+Konfiguration (API Keys, Pinecone Environment, Logging, gRPC-Port usw.)

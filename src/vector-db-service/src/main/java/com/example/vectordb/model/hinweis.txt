@@ -1,0 +1,1 @@
+Domain-Modelle, die unabhängig vom SDK sind – erleichtern Tests und API-Stabilität

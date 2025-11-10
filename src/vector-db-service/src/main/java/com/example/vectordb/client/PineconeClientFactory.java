@@ -5,6 +5,7 @@ import io.pinecone.configs.PineconeConfig;
 import okhttp3.OkHttpClient;
 
 import java.io.InputStream;
+import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -16,25 +17,39 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Hilfsklasse zur Konfiguration des HTTP-CLients der Pinecone Vector Database
+ * Clients
+ */
+class HTTPConfig {
+    public int connectionTimeout = 30;
+    public int readTimeout = 60;
+    public int writeTimeout = 60;
+    public boolean retryOnConnectionFailure = true;
+
+}
+
+/**
  * Konfigurationsklasse für Pinecone Vector Database Client.
  * Thread-safe Singleton-Pattern mit lazy initialization.
  */
-public class VectorDataBaseConfig {
+public class PineconeClientFactory {
 
     private String apiKey;
     private PineconeConfig config;
     private Pinecone client;
     private ObjectMapper mapper;
     private final Object lock = new Object();
+    private HTTPConfig httpConfigData;
 
     /**
      * Konstruktor lädt API-Key aus JSON
      */
-    public VectorDataBaseConfig() {
+    public PineconeClientFactory() {
         ensureKeyloaded(); //
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new IllegalArgumentException("API-Key darf nicht null oder leer sein");
         }
+        httpConfigData = new HTTPConfig();
         this.config = buildConfig();
     }
 
@@ -43,11 +58,12 @@ public class VectorDataBaseConfig {
      * 
      * @param apiKey Pinecone API-Key (erforderlich)
      */
-    public VectorDataBaseConfig(String apiKey, PineconeConfig customConfig) {
+    public PineconeClientFactory(String apiKey, PineconeConfig customConfig) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new IllegalArgumentException("API-Key darf nicht null oder leer sein");
         }
         this.apiKey = apiKey;
+        httpConfigData = new HTTPConfig();
         this.config = customConfig != null ? customConfig : buildConfig();
     }
 
@@ -61,22 +77,19 @@ public class VectorDataBaseConfig {
         // Source Tag für Tracking/Analytics
         cfg.setSourceTag("embedding-vector-service");
 
-        // Custom HTTP Client mit Timeouts
         OkHttpClient customHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(true)
+                .connectTimeout(httpConfigData.connectionTimeout, TimeUnit.SECONDS)
+                .readTimeout(httpConfigData.readTimeout, TimeUnit.SECONDS)
+                .writeTimeout(httpConfigData.writeTimeout, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(httpConfigData.retryOnConnectionFailure)
                 .build();
 
         cfg.setCustomOkHttpClient(customHttpClient);
 
-        // TLS sollte normalerweise aktiviert sein für Production
         cfg.setTLSEnabled(true);
 
         return cfg;
     }
-    // apiKey, sourceTag, proxyConfig, customOkHttpClient
 
     /**
      * Überprüft korrektes Laden der .json mit dem API-Key
@@ -95,7 +108,6 @@ public class VectorDataBaseConfig {
         try (java.io.InputStream is = getClass().getClassLoader().getResourceAsStream("secrets.json")) {
 
             if (is == null) {
-                // Die Datei wurde nicht auf dem Classpath gefunden.
                 throw new IllegalStateException(
                         "'secrets.json' not found on the classpath. Please ensure it's in src/main/resources.");
             }
@@ -112,7 +124,6 @@ public class VectorDataBaseConfig {
                 return;
             }
         } catch (IOException e) {
-            // Hier fangen Sie die Ausnahme ab
             System.err.println("Fehler beim Lesen oder Parsen von secrets.json: " + e.getMessage());
         }
         System.out.println(apiKey);
@@ -120,19 +131,14 @@ public class VectorDataBaseConfig {
     }
 
     /**
-     * erhalte Pinecone Client aus der Konfiguration
+     * erhalte Pinecone Client auf Basis dessen Konfiguration
      */
     public Pinecone getClient() {
         if (client == null) {
             synchronized (lock) {
                 if (client == null) {
                     try {
-                        // Config validieren
                         config.validate();
-
-                        // Client mit Konfiguration erstellen
-
-                        // Client MUSS über den Builder erstellt werden.
 
                         Pinecone.Builder builder = new Pinecone.Builder(config.getApiKey());
 
@@ -177,13 +183,6 @@ public class VectorDataBaseConfig {
     }
 
     /**
-     * Gibt die aktuelle Konfiguration zurück (Read-Only)
-     */
-    public PineconeConfig getConfig() {
-        return config;
-    }
-
-    /**
      * Schließt den Client und gibt Ressourcen frei
      */
     public void shutdown(Pinecone clientToTest) {
@@ -200,5 +199,64 @@ public class VectorDataBaseConfig {
                 }
             }
         }
+    }
+
+    /**
+     * Gibt die aktuelle Konfiguration zurück (Read-Only)
+     */
+    public PineconeConfig getConfig() {
+        return config;
+    }
+
+    /**
+     * Setzt die Verbindungs-Timeout in Millisekunden
+     * 
+     * @param time
+     */
+    public void setConnectionTimeOut(int time) {
+        httpConfigData.connectionTimeout = time;
+    }
+
+    public int getConnetionTimeOut() {
+        return httpConfigData.connectionTimeout;
+    }
+
+    /**
+     * Setzt die Lese-Timeout in Millisekunden
+     * 
+     * @param time
+     */
+    public void setReadTimeOut(int time) {
+        httpConfigData.readTimeout = time;
+    }
+
+    public int getReadTimeOut() {
+        return httpConfigData.readTimeout;
+    }
+
+    /**
+     * Setzt die Schreib-Timeout in Millisekunden
+     * 
+     * @param time
+     */
+    public void setWriteTimeOut(int time) {
+        httpConfigData.writeTimeout = time;
+    }
+
+    public int getWriteTimeOut() {
+        return httpConfigData.writeTimeout;
+    }
+
+    /**
+     * Setzt ob bei Verbindungsfehlern neu versucht werden soll
+     * 
+     * @param retry
+     */
+    public void setRetryOnConnectionFailure(boolean retry) {
+        httpConfigData.retryOnConnectionFailure = retry;
+    }
+
+    public boolean isRetryOnConnectionFailureOn() {
+        return httpConfigData.retryOnConnectionFailure;
     }
 }
