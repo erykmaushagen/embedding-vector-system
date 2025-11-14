@@ -1,11 +1,10 @@
-package com.example.vectordb.configure;
+package com.example.vectordb.client;
 
 import io.pinecone.clients.Pinecone;
 import io.pinecone.configs.PineconeConfig;
 import okhttp3.OkHttpClient;
 
 import java.io.InputStream;
-import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
 

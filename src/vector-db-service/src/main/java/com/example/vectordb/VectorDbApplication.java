@@ -1,3 +1,6 @@
+package com.example.vectordb;
+
+
 import com.example.vectordb.client.PineconeClientFactory;
 
 import io.pinecone.clients.Pinecone;
@@ -10,14 +13,14 @@ public class VectorDbApplication {
     public static void main(String[] args) {
         System.out.println("***************** TESTING *****************");
 
-        VectorDataBaseConfig myConfig = new VectorDataBaseConfig();
+        // VectorDataBaseConfig myConfig = new VectorDataBaseConfig();
 
-        Pinecone myClient = myConfig.getClient();
+        // Pinecone myClient = myConfig.getClient();
 
-        myConfig.testConnection(myClient);
+        // myConfig.testConnection(myClient);
 
-        myConfig.shutdown(myClient);
-        System.out.println("Client heruntergefahren.");
+        // myConfig.shutdown(myClient);
+        // System.out.println("Client heruntergefahren.");
 
         System.out.println("***************** TESTING ENDE *****************");
 
